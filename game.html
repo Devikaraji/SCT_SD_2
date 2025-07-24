@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Guessing Game - GUI Edition</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti for winning effect -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+    <!-- Tone.js for sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+
+    <style>
+        /* Custom styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0a0a0a;
+            overflow: hidden; /* Hide scrollbars caused by canvas */
+        }
+
+        /* Canvas for animated background */
+        #background-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        /* Glassmorphism effect for the main card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Animation for message feedback */
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.8); }
+            80% { opacity: 1; transform: scale(1.05); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .feedback-animation {
+            animation: popIn 0.4s ease-out;
+        }
+
+        /* Styling for the mute button */
+        #muteButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        #muteButton:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="text-white flex items-center justify-center min-h-screen p-4">
+    
+    <!-- Animated Background Canvas -->
+    <canvas id="background-canvas"></canvas>
+
+    <!-- Mute Button -->
+    <div id="muteButton" title="Toggle Sound">
+        <svg id="soundOnIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+        <svg id="soundOffIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white hidden"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+    </div>
+
+    <!-- Main Game Card -->
+    <div class="w-full max-w-md mx-auto p-6 md:p-8 rounded-2xl shadow-2xl glass-card">
+        
+        <!-- Header Section -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-black tracking-tighter text-white">Guess the Number!</h1>
+            <p class="text-gray-300 mt-2 text-lg">I'm thinking of a number from <span class="font-bold text-cyan-300">1</span> to <span class="font-bold text-cyan-300">100</span>.</p>
+        </div>
+
+        <!-- Game Interface -->
+        <div class="space-y-4">
+            <!-- Input field for the guess -->
+            <div>
+                <label for="guessInput" class="sr-only">Enter your guess</label>
+                <input type="number" id="guessInput" placeholder="Enter your guess..." class="w-full px-4 py-4 bg-white/10 border-2 border-transparent rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-cyan-400 focus:bg-white/5 transition duration-300 text-center text-2xl font-bold">
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                 <button id="guessButton" class="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 shadow-lg hover:shadow-cyan-500/50">
+                    SUBMIT
+                </button>
+                 <button id="resetButton" class="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-400 hover:to-pink-400 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 ease-in-out transform hover:scale-105 shadow-lg hover:shadow-purple-500/50 hidden">
+                    PLAY AGAIN
+                </button>
+            </div>
+        </div>
+
+        <!-- Message Area for Feedback -->
+        <div id="messageArea" class="text-center mt-6 min-h-[50px] flex items-center justify-center">
+            <p id="message" class="text-xl font-medium"></p>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Backend Logic & GUI Enhancements ---
+
+        // Get references to HTML elements
+        const guessInput = document.getElementById('guessInput');
+        const guessButton = document.getElementById('guessButton');
+        const resetButton = document.getElementById('resetButton');
+        const message = document.getElementById('message');
+        const muteButton = document.getElementById('muteButton');
+        const soundOnIcon = document.getElementById('soundOnIcon');
+        const soundOffIcon = document.getElementById('soundOffIcon');
+
+        let secretNumber;
+        let attempts;
+        let soundEnabled = true;
+
+        // --- Sound Engine (Tone.js) ---
+        let synth;
+        // Initialize sound on first user interaction
+        function initSound() {
+            if (!synth) {
+                synth = new Tone.Synth().toDestination();
+            }
+        }
+
+        // --- Particle Background Engine ---
+        const canvas = document.getElementById('background-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        let particles = [];
+
+        function createParticle() {
+            const x = Math.random() * canvas.width;
+            const y = Math.random() * canvas.height;
+            const size = Math.random() * 2 + 1;
+            const speedX = Math.random() * 1 - 0.5;
+            const speedY = Math.random() * 1 - 0.5;
+            const color = `rgba(0, 255, 255, ${Math.random() * 0.5 + 0.2})`;
+            particles.push({ x, y, size, speedX, speedY, color });
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particles.length; i++) {
+                const p = particles[i];
+                p.x += p.speedX;
+                p.y += p.speedY;
+                if (p.x < 0 || p.x > canvas.width) p.speedX *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.speedY *= -1;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.fill();
+            }
+            requestAnimationFrame(animateParticles);
+        }
+        
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        for (let i = 0; i < 100; i++) {
+            createParticle();
+        }
+        animateParticles();
+
+
+        // --- Game Logic ---
+
+        function newGame() {
+            secretNumber = Math.floor(Math.random() * 100) + 1;
+            attempts = 0;
+            guessInput.value = '';
+            guessInput.disabled = false;
+            showMessage('Make your first guess!', 'text-gray-300');
+            guessButton.classList.remove('hidden');
+            resetButton.classList.add('hidden');
+        }
+
+        function handleGuess() {
+            // Start audio context on user gesture
+            if (Tone.context.state !== 'running') {
+                Tone.start();
+                initSound();
+            }
+
+            const userGuess = parseInt(guessInput.value);
+            if (isNaN(userGuess) || userGuess < 1 || userGuess > 100) {
+                showMessage('Enter a number from 1-100.', 'text-yellow-300');
+                if (soundEnabled) synth.triggerAttackRelease("C2", "8n");
+                return;
+            }
+
+            attempts++;
+            if (userGuess < secretNumber) {
+                showMessage('Too low! Try higher. 👇', 'text-blue-300');
+                if (soundEnabled) synth.triggerAttackRelease("C3", "8n");
+            } else if (userGuess > secretNumber) {
+                showMessage('Too high! Try lower. 👆', 'text-red-300');
+                if (soundEnabled) synth.triggerAttackRelease("G4", "8n");
+            } else {
+                showMessage(`🎉 Correct! It was ${secretNumber}!`, 'text-green-300');
+                if (soundEnabled) {
+                    const now = Tone.now();
+                    synth.triggerAttackRelease("C4", "8n", now);
+                    synth.triggerAttackRelease("E4", "8n", now + 0.2);
+                    synth.triggerAttackRelease("G4", "8n", now + 0.4);
+                    synth.triggerAttackRelease("C5", "8n", now + 0.6);
+                }
+                endGame();
+            }
+            guessInput.value = '';
+            guessInput.focus();
+        }
+        
+        function showMessage(text, cssClass) {
+            message.textContent = text;
+            message.className = `text-xl font-bold feedback-animation ${cssClass}`;
+        }
+
+        function endGame() {
+            guessInput.disabled = true;
+            guessButton.classList.add('hidden');
+            resetButton.classList.remove('hidden');
+            // Trigger confetti!
+            confetti({
+                particleCount: 150,
+                spread: 90,
+                origin: { y: 0.6 }
+            });
+        }
+
+        // --- Event Listeners ---
+        guessButton.addEventListener('click', handleGuess);
+        guessInput.addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') handleGuess();
+        });
+        resetButton.addEventListener('click', newGame);
+        muteButton.addEventListener('click', () => {
+            soundEnabled = !soundEnabled;
+            Tone.Destination.mute = !soundEnabled;
+            soundOnIcon.classList.toggle('hidden');
+            soundOffIcon.classList.toggle('hidden');
+        });
+
+        // --- Initial Game Start ---
+        window.onload = newGame;
+    </script>
+</body>
+</html>
