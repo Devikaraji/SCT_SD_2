@@ -5,7 +5,7 @@
 
 A fun and fully interactive number guessing game with a **modern glassmorphism UI**, **animated background**, **sound effects**, and **confetti celebration** – all built using **HTML**, **Tailwind CSS**, and **JavaScript**.
 
-🔗 **Live Demo**: [Click to Play](https://your-github-username.github.io/your-repo-name)
+🔗 **Live Demo**: [Click to Play](https://devikaraji.github.io/SCT_SD_2/)
 
 > Replace the link above with your GitHub Pages URL.
 
@@ -34,8 +34,10 @@ Get instant feedback on your guess — too low, too high, or correct — with so
 
 > 📸 Here’s what it looks like:
 
-![Screenshot](./screenshot.png)
-
+![Screenshot](./gameLook.png)
+![Screenshot](./guessNo.png)
+![Screenshot](./guessNo2.png)
+![Screenshot](./guessNo3.png)
 ---
 
 ## 🛠 Tech Stack
@@ -51,9 +53,9 @@ Get instant feedback on your guess — too low, too high, or correct — with so
 🙋‍♀️ Author
 Devikaraji
 
-🌐 GitHub
+🌐 GitHub  https://github.com/Devikaraji
 
-💼 LinkedIn
+💼 LinkedIn  https://www.linkedin.com/in/devika-krishnan-7381721b2/
 ## 🧾 How to Run Locally
 
 1. **Clone this repository**:
