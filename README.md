@@ -7,7 +7,7 @@ A fun and fully interactive number guessing game with a **modern glassmorphism U
 
 🔗 **Live Demo**: [Click to Play](https://devikaraji.github.io/SCT_SD_2/)
 
-> Replace the link above with your GitHub Pages URL.
+
 
 ---
 
@@ -32,7 +32,7 @@ Get instant feedback on your guess — too low, too high, or correct — with so
 
 ## 🚀 Live Preview
 
-> 📸 Here’s what it looks like:
+
 
 ![Screenshot](./gameLook.png)
 ![Screenshot](./guessNo.png)
